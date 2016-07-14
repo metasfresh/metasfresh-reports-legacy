@@ -3,8 +3,8 @@
 **/.settings/
 *.cache
 *.diff
-*.project
-*.classpath
+**/*.project
+**/*.classpath
 **/activemq-data/
 
 **/.~lock*

@@ -23,7 +23,8 @@
 		<jasperreports.version>6.2.1</jasperreports.version>
 
 		<!-- FRESH-397: jasper 6.2.1 uses itext, poi and zxing with theses versions -->
-		<itext.version>2.1.7.js5-SNAPSHOT</itext.version>
+		<!-- actually, 6.2.1 declares 2.1.7.js5-SNAPSHOT, but i didn't find that version anywere -->
+		<itext.version>2.1.7.js5</itext.version>
 		<poi.version>3.12</poi.version>
 		<zxing.version>2.3.0</zxing.version>
 		
@@ -114,7 +115,9 @@
 						</configuration>
 
 						<dependencies>
-							<!--  for whatever reason, if we don't set this version explicitly, the plugin will try to work with 2.1.7.js5-SNAPSHOT -->
+							<!-- if we don't set this version explicitly, 
+								the plugin will try to work with 2.1.7.js5-SNAPSHOT because that's the dependency version declared by jasper-6-2-1 
+								and we don't have that version -->
 							<dependency>
 								<groupId>com.lowagie</groupId>
 								<artifactId>itext</artifactId>

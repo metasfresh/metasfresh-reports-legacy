@@ -3,13 +3,16 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<artifactId>reports-reactor</artifactId>
-		<groupId>de.metas.reports</groupId>
+		<artifactId>de.metas.parent.general</artifactId>
+		<groupId>de.metas</groupId>
 		<version>3-development-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
 	</parent>
-
+	
+	<!-- FRESH-271: we need an explicit version here, otherwise versions-maven-plugin can't set it to another version -->
+	<version>3-development-SNAPSHOT</version>
+	
 	<artifactId>reports-parent</artifactId>
+	<groupId>de.metas.reports</groupId>
 	
 	<description>Reusable parent pom for this repository and also for endcustomer repositories that need to build custom reports</description>
 

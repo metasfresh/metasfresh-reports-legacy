@@ -10,10 +10,10 @@
 	
 	<!-- FRESH-271: we need an explicit version here, otherwise versions-maven-plugin can't set it to another version -->
 	<version>3-development-SNAPSHOT</version>
-	
+
 	<artifactId>reports-parent</artifactId>
 	<groupId>de.metas.reports</groupId>
-	
+
 	<description>Reusable parent pom for this repository and also for endcustomer repositories that need to build custom reports</description>
 
 	<packaging>pom</packaging>
@@ -27,9 +27,9 @@
 		<itext.version>2.1.7.js5</itext.version>
 		<poi.version>3.12</poi.version>
 		<zxing.version>2.3.0</zxing.version>
-		
+
 	</properties>
-	
+
 	<dependencyManagement>
 		<dependencies>
 
@@ -37,6 +37,12 @@
 				<groupId>net.sf.jasperreports</groupId>
 				<artifactId>jasperreports</artifactId>
 				<version>${jasperreports.version}</version>
+				<exclusions>
+					<exclusion> <!-- ...because jasperreports-6.2.1 has a different version (without "-SNAPSHOT") and we don't want version convergence conflicts, also we couldn't obtain that -SNAPSHOT artifact -->
+						<groupId>com.lowagie</groupId>
+						<artifactId>itext</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<dependency>
@@ -59,13 +65,13 @@
 				<artifactId>javase</artifactId>
 				<version>${zxing.version}</version>
 			</dependency>
-		
+
 		</dependencies>
 	</dependencyManagement>
-		
+
 	<profiles>
-	
-			<profile>
+
+		<profile>
 			<!-- If there is a jasper sources directory, this profile will activate 
 				 It will compile those jrxml files and then assemble the jasper files into a jar.
 				 It will *NOT* add src/main/jasperreports as additional source folder, (that's done by the "jasper-source-folder" profile)
@@ -115,15 +121,6 @@
 						</configuration>
 
 						<dependencies>
-							<!-- if we don't set this version explicitly, 
-								the plugin will try to work with 2.1.7.js5-SNAPSHOT because that's the dependency version declared by jasper-6-2-1 
-								and we don't have that version -->
-							<dependency>
-								<groupId>com.lowagie</groupId>
-								<artifactId>itext</artifactId>
-								<version>${itext.version}</version>
-							</dependency>
-
 							<!-- note that excluding jasperreports:jasperreports version 1.2 doesn't work even if we don't need it, 
 								see http://stackoverflow.com/questions/34193602/how-to-exclude-jasperreports-artifact-from-jasperreports-maven-plugin/34198348 -->
 							<dependency>
@@ -135,7 +132,22 @@
 								<groupId>net.sf.jasperreports</groupId>
 								<artifactId>jasperreports</artifactId>
 								<version>${jasperreports.version}</version>
+								<exclusions>
+									<exclusion> <!-- ...because we have a different version (without "-SNAPSHOT" and we don't want version convergence conflicts) -->
+										<groupId>com.lowagie</groupId>
+										<artifactId>itext</artifactId>
+									</exclusion>
+								</exclusions>
 							</dependency>
+							<!-- if we don't set this version explicitly, 
+								the plugin will try to work with 2.1.7.js5-SNAPSHOT because that's the dependency version declared by jasper-6-2-1 
+								and we don't have that version -->
+							<dependency>
+								<groupId>com.lowagie</groupId>
+								<artifactId>itext</artifactId>
+								<version>${itext.version}</version>
+							</dependency>
+
 
 						</dependencies>
 						<executions>
@@ -186,7 +198,7 @@
 				</plugins>
 			</build>
 		</profile>
-		
+
 		<profile>
 			<!-- Adds src/main/jasperreports as additional source folder (if the directory is present) 
 			this is only intended to be active when running in eclipse, and not for *any* actual maven build.
@@ -224,9 +236,9 @@
 				</plugins>
 			</build>
 		</profile>
-		
+
 	</profiles>
-	
+
 	<build>
 		<pluginManagement>
 			<plugins>

@@ -1,0 +1,265 @@
+<Schema name="Spavetti - OLAP">
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="M_Product" caption="Produkt">
+    <Hierarchy visible="true" hasAll="true" allMemberName="Alle Produkte" primaryKey="m_product_id">
+      <Table name="m_product" schema="public">
+      </Table>
+      <Level name="Kategorie" visible="true" column="m_product_category_id" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[(select pc.name from m_product_category pc where pc.m_product_category_id=m_product.m_product_category_id)]]>
+          </SQL>
+        </NameExpression>
+      </Level>
+      <Level name="Produkt" visible="true" column="m_product_id" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[( m_product.value || ' ' || m_product.name )]]>
+          </SQL>
+        </NameExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_Activity" caption="Kostenstelle">
+    <Hierarchy name="KstSt.-Nr und Name" visible="true" hasAll="true" allMemberName="Alle Kostenstellen">
+      <Table name="c_activity" schema="public">
+      </Table>
+      <Level name="KstSt.-Nr und Name" visible="true" column="c_activity_id" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[( value || ' ' || name )]]>
+          </SQL>
+        </NameExpression>
+        <ParentExpression>
+          <SQL dialect="generic">
+            <![CDATA[( select p.C_Activity_ID from C_Activity p where C_Activity.Value != p.Value AND C_Activity.Value LIKE p.Value || '.%' )]]>
+          </SQL>
+        </ParentExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_ElementValue_Tree" caption="Kontenbaum">
+    <Hierarchy name="C_ElementValue_Tree" visible="true" hasAll="true" allMemberName="Alle Konten" primaryKey="c_elementvalue_id" caption="Kto.-Nr und Name (Baum)">
+      <Table name="c_elementvalue" schema="public">
+      </Table>
+      <Level name="C_ElementValue_Level" visible="true" column="c_elementvalue_id" ordinalColumn="value" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Kto.Baum-Nr und Name">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[( value || ' ' || name )]]>
+          </SQL>
+        </NameExpression>
+        <ParentExpression>
+          <SQL dialect="generic">
+            <![CDATA[(select evp.c_elementvalue_id from c_element e, ad_treenode tn, c_elementvalue evp where e.c_element_id=c_elementvalue.c_element_id and tn.ad_tree_id=e.ad_tree_id and tn.node_id=c_elementvalue.c_elementvalue_id and evp.C_ElementValue_ID=tn.Parent_ID)]]>
+          </SQL>
+        </ParentExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_AllocationLine" caption="Zuordnungsposition">
+    <Hierarchy visible="true" hasAll="true" allMemberName="C_Allocation_All" allMemberCaption="Alle Zuordnungen" primaryKey="c_allocationline_id" primaryKeyTable="c_allocationline" caption="Zuordnung">
+      <Join leftKey="c_allocationhdr_id" rightKey="c_allocationhdr_id">
+        <Table name="c_allocationline" schema="public">
+        </Table>
+        <Table name="c_allocationhdr" schema="public">
+        </Table>
+      </Join>
+      <Level name="C_AllocationHdr" visible="true" table="c_allocationhdr" column="c_allocationhdr_id" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" caption="Zuordnung">
+      </Level>
+      <Level name="C_AllocationLine" visible="true" table="c_allocationline" column="c_allocationline_id" parentColumn="c_allocationhdr_id" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Zuordnungsposition">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_Payment" caption="Zahlung">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Zahlungen" caption="Zahlung">
+      <Table name="c_payment" schema="public">
+      </Table>
+      <Level name="C_Payment" visible="true" column="c_payment_id" ordinalColumn="documentno" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Zahlung">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[( c_payment.documentno || ' (' || to_char(c_payment.dateacct, 'DD.MM.YYYY') || ')' )]]>
+          </SQL>
+        </NameExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_Period" caption="Buchungsperiode">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Perioden" primaryKey="c_period_id" primaryKeyTable="c_period" caption="Periode">
+      <Join leftKey="c_year_id" rightKey="c_year_id">
+        <Table name="c_period" schema="public">
+        </Table>
+        <Table name="c_year" schema="public">
+        </Table>
+      </Join>
+      <Level name="Year" visible="true" table="c_year" column="c_year_id" nameColumn="fiscalyear" ordinalColumn="fiscalyear" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Jahr">
+      </Level>
+      <Level name="Period" visible="true" table="c_period" column="c_period_id" nameColumn="name" ordinalColumn="startdate" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Periode">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_BPartner" caption="Partner">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Partner" primaryKey="c_bpartner_id" primaryKeyTable="c_bpartner" caption="Partner">
+      <Join leftKey="c_bp_group_id" rightKey="c_bp_group_id">
+        <Table name="c_bpartner" schema="public">
+        </Table>
+        <Table name="c_bp_group" schema="public">
+        </Table>
+      </Join>
+      <Level approxRowCount="50" name="C_BP_Group" visible="true" table="c_bp_group" column="c_bp_group_id" nameColumn="name" ordinalColumn="value" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" caption="Gruppe">
+      </Level>
+      <Level approxRowCount="1500" name="C_BPartner" visible="true" table="c_bpartner" column="c_bpartner_id" ordinalColumn="value" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Partner">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[C_BPartner.Name || '_' || C_BPartner.Value]]>
+          </SQL>
+        </NameExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_Invoice" caption="Rechnung">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Rechnungen" caption="Rechnung">
+      <Table name="c_invoice" schema="public">
+      </Table>
+      <Level name="C_Invoice" visible="true" column="c_invoice_id" ordinalColumn="documentno" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Rechnung">
+        <NameExpression>
+          <SQL dialect="generic">
+            <![CDATA[( c_invoice.documentno || ' (' || to_char(c_invoice.dateacct, 'DD.MM.YYYY') || ')' )]]>
+          </SQL>
+        </NameExpression>
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_InvoiceLine" caption="Rechnungsposition">
+    <Hierarchy name="Rechnungsposition" visible="true" hasAll="true" allMemberCaption="Alle Rechnungspositionen" primaryKey="c_invoiceline_id" primaryKeyTable="c_invoiceline" caption="Rechnungsposition">
+      <Join leftKey="c_invoice_id" rightKey="c_invoice_id">
+        <Table name="c_invoice" schema="public">
+        </Table>
+        <Table name="c_invoiceline" schema="public">
+        </Table>
+      </Join>
+      <Level name="C_Invoice" visible="true" table="c_invoice" column="c_invoice_id" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Rechnung">
+      </Level>
+      <Level name="C_InvoiceLine" visible="true" table="c_invoiceline" column="c_invoiceline_id" nameColumn="line" ordinalColumn="line" type="Integer" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Position">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="AD_Table" caption="DB-Tabelle">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Tabellen">
+      <Table name="ad_table" schema="public">
+      </Table>
+      <Level name="AD_Table" visible="true" column="ad_table_id" nameColumn="tablename" ordinalColumn="tablename" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never" caption="DB-Tabelle">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="M_InOutLine" caption="Lieferungs-/Wareneingangsposition">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Lieferungs-/Wareneingangspositionen" primaryKey="m_inoutline_id" primaryKeyTable="m_inoutline">
+      <Join leftKey="m_inout_id" rightKey="m_inout_id">
+        <Table name="m_inout" schema="public">
+        </Table>
+        <Table name="m_inoutline" schema="public">
+        </Table>
+      </Join>
+      <Level name="M_InOut" visible="true" table="m_inout" column="m_inout_id" nameColumn="documentno" ordinalColumn="documentno" type="String" uniqueMembers="false" levelType="Regular" hideMemberIf="Never">
+      </Level>
+      <Level name="M_InOutLine" visible="true" table="m_inoutline" column="m_inoutline_id" nameColumn="line" ordinalColumn="line" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Position">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="C_BankStatementLine" caption="Bankauszugsposition">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Bankauszugspositionen" primaryKey="c_bankstatementline_id" primaryKeyTable="c_bankstatementline" caption="Bankauszugsposition">
+      <Join leftKey="c_bankstatement_id" rightKey="c_bankstatement_id">
+        <Table name="c_bankstatement" schema="public">
+        </Table>
+        <Table name="c_bankstatementline" schema="public">
+        </Table>
+      </Join>
+      <Level name="C_BankStatement" visible="true" table="c_bankstatement" column="c_bankstatement_id" nameColumn="documentno" ordinalColumn="documentno" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Bankauszug">
+      </Level>
+      <Level name="C_BankstatementLine" visible="true" table="c_bankstatementline" column="c_bankstatementline_id" nameColumn="line" ordinalColumn="line" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Position">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" highCardinality="false" name="M_MovementLine" caption="Warenbewegungsposition">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Warenbewegungspositionen" primaryKey="m_movementline_id" primaryKeyTable="m_movementline">
+      <Join leftKey="m_movement_id" rightKey="m_movement_id">
+        <Table name="m_movement" schema="public">
+        </Table>
+        <Table name="m_movementline" schema="public">
+        </Table>
+      </Join>
+      <Level name="M_Movmement" visible="true" table="m_movement" column="m_movement_id" nameColumn="documentno" ordinalColumn="documentno" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Warenbewegung">
+      </Level>
+      <Level name="M_MovementLine" visible="true" table="m_movementline" column="m_movementline_id" nameColumn="line" ordinalColumn="line" type="String" uniqueMembers="true" levelType="Regular" hideMemberIf="Never" caption="Position">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="StandardDimension" visible="true" name="AD_Ref_List_DocStatus" caption="Belegstatus">
+    <Hierarchy visible="true" hasAll="true" allMemberCaption="Alle Belegstatus" primaryKey="ad_ref_list_id">
+      <Table name="ad_ref_list_docstatus_v" schema="report">
+      </Table>
+      <Level name="DocStatus" visible="true" column="ad_ref_list_id" nameColumn="name" ordinalColumn="value" type="String" uniqueMembers="true">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Dimension type="TimeDimension" visible="true" name="DateAcct" caption="Buchungsdatum">
+    <Hierarchy name="DateAcct" visible="true" hasAll="true" allMemberName="Alle Buchungsdaten" caption="Buchungsdatum">
+      <Table name="datedimension" schema="report">
+      </Table>
+      <Level name="Year" visible="true" column="year" ordinalColumn="year" type="Numeric" uniqueMembers="true" levelType="TimeYears" caption="Jahr">
+      </Level>
+      <Level name="Month" visible="true" column="month" ordinalColumn="month" type="Numeric" uniqueMembers="false" levelType="TimeMonths" caption="Monat">
+      </Level>
+      <Level name="Day" visible="true" column="day" ordinalColumn="day" type="Numeric" uniqueMembers="false" levelType="TimeDays" caption="Tag">
+      </Level>
+    </Hierarchy>
+    <Hierarchy name="DateAcctWeek" visible="true" hasAll="true" allMemberCaption="Alle Wochen" caption="Buchungswoche">
+      <Table name="datedimension" schema="report" alias="">
+      </Table>
+      <Level name="Year" visible="true" column="year" ordinalColumn="year" type="Numeric" uniqueMembers="true" levelType="TimeYears" caption="Jahr">
+      </Level>
+      <Level name="Week" visible="true" column="week" ordinalColumn="week" type="Numeric" uniqueMembers="false" levelType="TimeWeeks" caption="Woche">
+      </Level>
+    </Hierarchy>
+  </Dimension>
+  <Cube name="accounting" caption="Buchhaltung" visible="true" description="Cube basiert auf aufbereiteter fact-table" cache="true" enabled="true">
+    <Table name="accounting_facts_mv" schema="report">
+    </Table>
+    <DimensionUsage source="M_Product" name="M_Product" caption="Produkt" visible="true" foreignKey="m_product_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_Activity" name="C_Activity" caption="Kostenstelle" visible="true" foreignKey="c_activity_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_ElementValue_Tree" name="C_ElementValue_Tree" caption="Kontenbaum" visible="true" foreignKey="account_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_AllocationLine" name="C_AllocationLine" caption="Zuordnung" visible="true" foreignKey="c_allocationline_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_Payment" name="C_Payment" caption="Zahlung" visible="true" foreignKey="c_payment_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_Period" name="C_Period" caption="Buchungsperiode" visible="true" foreignKey="c_period_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_BPartner" name="C_BPartner" caption="Partner" visible="true" foreignKey="c_bpartner_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_Invoice" name="C_Invoice" caption="Rechnung" visible="true" foreignKey="c_invoice_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_InvoiceLine" name="C_invoiceLine" caption="Rechnungsposition" visible="true" foreignKey="c_invoiceline_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="AD_Table" name="AD_Table" caption="DB-Tabelle" visible="true" foreignKey="ad_table_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="M_InOutLine" name="M_InOutLine" caption="Lieferungs-/Wareneingangsposition" visible="true" foreignKey="m_inoutline_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="C_BankStatementLine" name="C_BankstatementLine" caption="Bankauszugsposition" visible="true" foreignKey="c_bankstatementline_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="M_MovementLine" name="M_MovementLine" caption="Warenbewegungsposition" visible="true" foreignKey="m_movementline_id" highCardinality="false">
+    </DimensionUsage>
+    <DimensionUsage source="AD_Ref_List_DocStatus" name="AD_Ref_List_DocStatus" caption="Belegstatus" visible="true" foreignKey="ad_ref_list_docstatus_id">
+    </DimensionUsage>
+    <DimensionUsage source="DateAcct" name="DateAcct" caption="Buchungsdatum" visible="true" foreignKey="datedimension_id">
+    </DimensionUsage>
+    <Measure name="Soll" column="amtacctcr" datatype="Numeric" formatString="00#,###.00" aggregator="sum" visible="true">
+    </Measure>
+    <Measure name="Haben" column="amtacctdr" datatype="Numeric" formatString="00#,###.00" aggregator="sum" visible="true">
+    </Measure>
+    <CalculatedMember name="Soll minus Haben" formula="( [Measures].[Soll] - [Measures].[Haben] )" dimension="Measures" visible="true">
+    </CalculatedMember>
+    <CalculatedMember name="Soll minus Haben (0-&#62;Leer)" formatString="" formula="IIF ( [Measures].[Soll minus Haben] = 0 , NULL, [Measures].[Soll minus Haben] ))" dimension="Measures" visible="true">
+    </CalculatedMember>
+  </Cube>
+</Schema>

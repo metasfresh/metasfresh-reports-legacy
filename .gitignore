@@ -1,0 +1,11 @@
+**/bin/
+**/target/
+**/.settings/
+*.cache
+*.diff
+*.project
+*.classpath
+**/activemq-data/
+
+**/.~lock*
+*.jasper

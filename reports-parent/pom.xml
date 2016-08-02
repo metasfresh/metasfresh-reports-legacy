@@ -1,0 +1,255 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>reports-reactor</artifactId>
+		<groupId>de.metas.reports</groupId>
+		<version>3-development-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<artifactId>reports-parent</artifactId>
+	
+	<description>Reusable parent pom for this repository and also for endcustomer repositories that need to build custom reports</description>
+
+	<packaging>pom</packaging>
+
+	<properties>
+			<!-- right now 6.2.2 is the latest, but there we suffer from http://community.jaspersoft.com/jasperreports-library/issues/7521 -->
+		<jasperreports.version>6.2.1</jasperreports.version>
+
+		<!-- FRESH-397: jasper 6.2.2 uses itext, poi and zxing with theses versions -->
+		<itext.version>2.1.7.js5</itext.version>
+		<poi.version>3.12</poi.version>
+		<zxing.version>2.3.0</zxing.version>
+		
+	</properties>
+	
+	<dependencyManagement>
+		<dependencies>
+
+			<dependency>
+				<groupId>net.sf.jasperreports</groupId>
+				<artifactId>jasperreports</artifactId>
+				<version>${jasperreports.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.lowagie</groupId>
+				<artifactId>itext</artifactId>
+				<version>${itext.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi</artifactId>
+				<version>${poi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.zxing</groupId>
+				<artifactId>core</artifactId>
+				<version>${zxing.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.zxing</groupId>
+				<artifactId>javase</artifactId>
+				<version>${zxing.version}</version>
+			</dependency>
+		
+		</dependencies>
+	</dependencyManagement>
+		
+	<profiles>
+	
+			<profile>
+			<!-- If there is a jasper sources directory, this profile will activate 
+				 It will compile those jrxml files and then assemble the jasper files into a jar.
+				 It will *NOT* add src/main/jasperreports as additional source folder, (that's done by the "jasper-source-folder" profile)
+			-->
+			<id>jasper-build</id>
+
+			<activation>
+				<file>
+					<exists>src/main/jasperreports</exists>
+				</file>
+			</activation>
+
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-resources-plugin</artifactId>
+						<version>2.6</version>
+						<executions>
+							<execution>
+								<id>copy-resources</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+						            <!-- same as jasperreports-maven-plugin's outputDirectory -->
+									<outputDirectory>${project.build.directory}/jasper</outputDirectory>
+									<resources>
+										<resource>
+											<directory>src/main/jasperreports</directory>
+											<excludes>
+												<exclude>**/*.jrxml</exclude> <!-- jrxmls are compiled into jasper files, they don't need to be copied -->
+											</excludes>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>jasperreports-maven-plugin</artifactId>
+						<version>1.0-beta-2</version>
+						<configuration>
+							<outputDirectory>${project.build.directory}/jasper</outputDirectory>
+						</configuration>
+
+						<dependencies>
+							<!--  for whatever reason, if we don't set this version explicitly, the plugin will try to work with 2.1.7.js5-SNAPSHOT -->
+							<dependency>
+								<groupId>com.lowagie</groupId>
+								<artifactId>itext</artifactId>
+								<version>${itext.version}</version>
+							</dependency>
+
+							<!-- note that excluding jasperreports:jasperreports version 1.2 doesn't work even if we don't need it, 
+								see http://stackoverflow.com/questions/34193602/how-to-exclude-jasperreports-artifact-from-jasperreports-maven-plugin/34198348 -->
+							<dependency>
+								<groupId>org.codehaus.mojo</groupId>
+								<artifactId>jasperreports-maven-plugin</artifactId>
+								<version>1.0-beta-2</version>
+							</dependency>
+							<dependency>
+								<groupId>net.sf.jasperreports</groupId>
+								<artifactId>jasperreports</artifactId>
+								<version>${jasperreports.version}</version>
+							</dependency>
+
+						</dependencies>
+						<executions>
+							<execution>
+								<goals>
+									<goal>compile-reports</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<artifactId>maven-assembly-plugin</artifactId>
+						<dependencies>
+							<dependency>
+								<groupId>de.metas.assemblies</groupId>
+								<artifactId>de.metas.assemblies</artifactId>
+								<version>${metasfresh-dependency.version}</version>
+							</dependency>
+						</dependencies>
+						<executions>
+							<execution>
+								<id>make-jasper-assembly</id> <!-- this is used for inheritance merges -->
+								<phase>package</phase> <!-- bind to the packaging phase -->
+								<goals>
+									<goal>single</goal>
+								</goals>
+								<configuration>
+									<descriptorRefs>
+										<descriptorRef>jasper</descriptorRef>
+									</descriptorRefs>
+								</configuration>
+							</execution>
+							<execution>
+								<id>make-jasper-sources-assembly</id> <!-- this is used for inheritance merges -->
+								<phase>package</phase> <!-- bind to the packaging phase -->
+								<goals>
+									<goal>single</goal>
+								</goals>
+								<configuration>
+									<descriptorRefs>
+										<descriptorRef>jasper_sources</descriptorRef>
+									</descriptorRefs>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		
+		<profile>
+			<!-- Adds src/main/jasperreports as additional source folder (if the directory is present) 
+			this is only intended to be active when running in eclipse, and not for *any* actual maven build.
+			we don't want the jasper-stuff to end up in a "regular" artifact jar!
+			Particularly the properties files need to be overridden in certain situations, 
+			so we can't afford to have an additional copy in the classpath via regular jars
+
+			Hint: 
+			in eclipse, you can activate this profile in the projects where you need it, by opening the projects properties (=>maven).
+			But, then you can't build a proper artifact using eclipse-maven
+			-->
+			<id>jasper-source-folder</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>build-helper-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>add-resource</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>add-resource</goal>
+								</goals>
+								<configuration>
+									<resources>
+										<resource>
+											<directory>src/main/jasperreports</directory>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		
+	</profiles>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.codehaus.mojo</groupId>
+										<artifactId>jasperreports-maven-plugin</artifactId>
+										<versionRange>[1.0-beta-2,)</versionRange>
+										<goals>
+											<goal>compile-reports</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+</project>
